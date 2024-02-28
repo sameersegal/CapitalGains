@@ -1,5 +1,7 @@
 # Capital Gains Calculation
 
+Calculates Capital Gains for US stocks based on the Indian process. Fetches data from Google Spreadsheets and scrapes relevant data from other places.
+
 ## Process
 
 **Pre-Processing**
@@ -30,5 +32,7 @@
 
 ## Developer Notes
 ```
-$ 
+$ poetry shell
+$ poetry install
+$ poetry run python3 main.py
 ```
