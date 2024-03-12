@@ -40,3 +40,15 @@ def extract_table(code: str, html: str) -> list:
         split_history.append((date, ratio))
 
     return split_history[1:]
+
+def download_cii_data() -> str:
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+    }
+    url = "https://cleartax.in/s/cost-inflation-index"
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        raise Exception(
+            f"Failed to download {url} with status code {response.status_code}")
+    else:
+        return response.text

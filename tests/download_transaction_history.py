@@ -2,6 +2,7 @@ from datetime import datetime
 import pandas as pd
 from sheets import fetch_data_from_spreadsheet
 from dates import get_financial_year
+from process import get_sales_for_year, get_entire_history_for_stock
 from unittest import TestCase
 import os
 from dotenv import load_dotenv
@@ -34,7 +35,14 @@ class TestSheets(TestCase):
     def test_sales_in_financial_year(self):
         start, end = get_financial_year()
         df = pd.read_csv('txn_history.csv')
-        # df['TradeTime'] = 07/07/1997
-        df['TradeTime'] = pd.to_datetime(df['TradeTime'], format='mixed', dayfirst=False)
-        txns_current_year = df[(df['TradeTime'] >= start) & (df['TradeTime'] <= end)]
-        print(txns_current_year)
+        sales_this_year = get_sales_for_year(df, start, end)
+        stocks_sold = sales_this_year['Symbol'].unique()
+        stocks_sold.sort()
+        print(stocks_sold)
+
+    def test_appl_history(self):
+        start, end = get_financial_year()
+        df = pd.read_csv('txn_history.csv')
+        code = "AAPL"
+        history = get_entire_history_for_stock(df, code, end)
+        print(history)

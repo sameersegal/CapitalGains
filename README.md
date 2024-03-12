@@ -6,10 +6,10 @@ Calculates Capital Gains for US stocks based on the Indian process. Fetches data
 
 **Pre-Processing**
 1. Fetch Transaction History from Spreadsheet and save.
-2. Find stocks sold in the current financial year
-3. Find stocks sold
-4. For each such stock sold calculate capital gains
-5. Get the stock split history for each such stock
+2. Fetch CII data and save.
+3. Find stocks sold in the current financial year
+4. Get the stock split history for each such stock
+5. For each such stock sold calculate capital gains
 
 **Capital Gains Calculation**
 1. Inputs (for 1 stock): 
