@@ -1,4 +1,5 @@
 import pandas as pd
+from dates import get_financial_year
 
 
 def calc_gains(history: pd.DataFrame, splits: pd.DataFrame, start, end):
@@ -63,3 +64,45 @@ def sell_fifo(buys, sales):
                 break
 
     return pd.DataFrame(df)
+
+
+def compute_profit(df):
+
+    print(df)
+
+    df.loc[:, 'Date Sold'] = pd.to_datetime(df['Date Sold'], format='%Y-%m-%d')
+    df.loc[:, 'Purchase Date'] = pd.to_datetime(
+        df['Purchase Date'], format='%Y-%m-%d')
+
+    def get_fy(date):
+        start, end = get_financial_year(date)
+        return f"{start.year}-{end.year % 100}"
+
+    df.loc[:, 'FY Selling'] = df.apply(
+        lambda x: get_fy(x['Date Sold']), axis=1)
+    df.loc[:, 'FY Purchase'] = df.apply(
+        lambda x: get_fy(x['Purchase Date']), axis=1)
+    
+    cii = pd.read_csv('cii.csv')
+
+    df = df.merge(cii, left_on='FY Selling', right_on='Financial Year')
+    df = df.rename(columns={'CII': 'CII Selling'})
+    df = df.drop(columns=['Financial Year'])
+
+    df = df.merge(cii, left_on='FY Purchase', right_on='Financial Year')
+    df = df.rename(columns={'CII': 'CII Purchase'})
+    df = df.drop(columns=['Financial Year'])
+
+    df.loc[:, 'Indexed Cost Price'] = df['Cost Price'] * \
+        (df['CII Selling'] / df['CII Purchase'])
+    
+    # df.loc[:, 'Profit'] = (df['Sale Price'] - df['Indexed Cost Price']) * df['Quantity']
+
+    # Long term capital gains with indexation benefits
+    df.loc[:, 'Tax@20WI'] = (df['Sale Price'] - df['Indexed Cost Price']) * df['Quantity'] * 0.2
+
+    df.loc[:, 'Tax@20'] = (df['Sale Price'] - df['Cost Price']) * df['Quantity'] * 0.2
+
+    print(df)
+
+    return df
