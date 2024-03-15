@@ -23,16 +23,43 @@ def calc_gains(history: pd.DataFrame, splits: pd.DataFrame, start, end):
     # FIFO before start
     prev_sales = history.loc[(history['B/S'] == 'Sold')
                              & (history['TradeTime'] < start), :]
-    for i in range(len(prev_sales)):
-        sold = prev_sales.iloc[i]['Amount'] * -1
-        for j in range(len(buy_txn)):
-            txn = buy_txn.iloc[j]
-            if txn['Amount'] == 0:
+
+    sell_fifo(buy_txn, prev_sales)
+
+    print(buy_txn)
+
+    new_sales = history.loc[(history['B/S'] == 'Sold')
+                            & (history['TradeTime'] >= start), :]
+    print(new_sales)
+
+    data = sell_fifo(buy_txn, new_sales)
+
+    print(buy_txn)
+
+    print(data)
+
+
+def sell_fifo(buys, sales):
+    df = []
+    for i in range(len(sales)):
+        sold = sales.iloc[i]['SplitAdjusted'] * -1
+        sale_index = sales.index[i]
+        for j in range(len(buys)):
+            txn = buys.iloc[j]
+            buy_index = buys.index[j]
+            if txn['SplitAdjusted'] == 0:
                 continue
-            reduce_by = max(txn['Amount'], sold)
+            reduce_by = min(txn['SplitAdjusted'], sold)
             sold -= reduce_by
-            buy_txn.loc[j:1, 'Amount'] -= reduce_by
+            df.append({
+                'Date Sold': sales.at[sale_index, 'TradeTime'],
+                'Quantity': reduce_by,
+                'Sale Price': sales.at[sale_index, 'SplitAdjustedPrice'],
+                'Cost Price': txn['SplitAdjustedPrice'],
+                'Purchase Date': txn['TradeTime']
+            })
+            buys.at[buy_index, 'SplitAdjusted'] -= reduce_by
             if sold == 0:
                 break
 
-    print(buy_txn)
+    return pd.DataFrame(df)
