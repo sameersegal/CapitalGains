@@ -34,5 +34,5 @@ Calculates Capital Gains for US stocks based on the Indian process. Fetches data
 ```
 $ poetry shell
 $ poetry install
-$ poetry run python3 main.py
+$ python3 main.py --date 2024-03-01 --debug --owner DC --skip GOOG GOOGL HDFC
 ```

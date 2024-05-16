@@ -35,9 +35,7 @@ def main(**kwargs):
     stocks_sold.sort()
 
     if kwargs.get('skip', None):
-        print(stocks_sold)
-        stocks_sold = [x for x in stocks_sold if x not in ['GOOG', 'GOOGL','HDFC']]
-        print(stocks_sold)
+        stocks_sold = [x for x in stocks_sold if x not in kwargs['skip']]
 
     if kwargs.get('debug', False):
         print(f"Stocks sold this year after removing skipped ones {kwargs['skip']}")
@@ -119,5 +117,6 @@ if __name__ == "__main__":
         print(colored("Current configuration:", 'yellow'))
         for k, v in kwargs.items():
             print(colored(f"{k}: {v} ({type(v)})", 'yellow'))
+        print("\n")
 
     main(**kwargs)
