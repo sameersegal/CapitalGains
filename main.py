@@ -70,6 +70,10 @@ def main(**kwargs):
             lambda x: extract_ratio(x))
         # print(splits)
 
+        # convert date from MM/DD/YYYY to YYYY-MM-DD
+        splits['Date'] = pd.to_datetime(splits['Date'], format='%m/%d/%Y')
+        print(splits.to_csv(index=False))
+
         data = calc_gains(history, splits, start, end)
         data = compute_profit(data)
 

@@ -3,11 +3,11 @@ from dates import get_financial_year
 
 
 def calc_gains(history: pd.DataFrame, splits: pd.DataFrame, start, end):
-    history = history[["TradeTime", "B/S", "Amount", "Price in INR", "Owner"]]
+    history = history[["TradeTime", "B/S", "Amount", "Price", "Price in INR", "Owner"]]
     # removing stock split entries
     history = history[history['Price in INR'].apply(lambda x: int(x) != 0)]
     history['Ratio'] = 0
-    print(splits)
+    
     for i in range(len(splits)):
         split = splits.iloc[i]
         condition = history['TradeTime'] <= split['Date']
@@ -17,7 +17,8 @@ def calc_gains(history: pd.DataFrame, splits: pd.DataFrame, start, end):
         float) * history['Ratio']
     history.loc[:, 'SplitAdjustedPrice'] = history['Price in INR'] / \
         history['Ratio']
-    print(history)
+    print("History")
+    print(history.to_csv(index=False))
 
     buy_txn = history.loc[history['B/S'] == 'Bought', :]
 
@@ -27,17 +28,19 @@ def calc_gains(history: pd.DataFrame, splits: pd.DataFrame, start, end):
 
     sell_fifo(buy_txn, prev_sales)
 
-    print(buy_txn)
+    print("Adjusting for previous sales")
+    print(buy_txn.to_csv(index=False))
 
     new_sales = history.loc[(history['B/S'] == 'Sold')
                             & (history['TradeTime'] >= start), :]
-    print(new_sales)
+    # print(new_sales)
 
     data = sell_fifo(buy_txn, new_sales)
 
-    print(buy_txn)
+    # print(buy_txn)
 
-    print(data)
+    print("Calculating purchase price & quantity for sales in current FY")
+    print(data.to_csv(index=False))
 
     return data
 
@@ -70,7 +73,7 @@ def sell_fifo(buys, sales):
 
 def compute_profit(df):
 
-    print(df)
+    # print(df)
 
     df.loc[:, 'Date Sold'] = pd.to_datetime(df['Date Sold'], format='%Y-%m-%d')
     df.loc[:, 'Purchase Date'] = pd.to_datetime(
@@ -105,6 +108,7 @@ def compute_profit(df):
 
     df.loc[:, 'Tax@20'] = (df['Sale Price'] - df['Cost Price']) * df['Quantity'] * 0.2
 
-    print(df)
+    print("Final Calculation")
+    print(df.to_csv(index=False))
 
     return df
