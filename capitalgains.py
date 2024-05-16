@@ -3,7 +3,7 @@ from dates import get_financial_year
 
 
 def calc_gains(history: pd.DataFrame, splits: pd.DataFrame, start, end):
-    history = history[["TradeTime", "B/S", "Amount", "Price in INR"]]
+    history = history[["TradeTime", "B/S", "Amount", "Price in INR", "Owner"]]
     # removing stock split entries
     history = history[history['Price in INR'].apply(lambda x: int(x) != 0)]
     history['Ratio'] = 0

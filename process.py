@@ -19,9 +19,9 @@ def get_sales_for_year(df, start, end, owner):
 
 def get_entire_history_for_stock(df, code, end, owner):
     df['TradeTime'] = pd.to_datetime(df['TradeTime'], format='mixed', dayfirst=False)
-    print("original", df.shape, "\n")
+    # print("original", df.shape, "\n")
     history = df[(df['TradeTime'] <= end) & (df['Symbol'] == code) & (df['B/S'].apply(lambda x: x in ['Bought', 'Sold']))]
     history = history[["Owner","Instrument","Symbol","TradeTime","B/S","Amount","Price","Currency","Price in INR"]]
-    history = history[history['Owner'].apply(lambda x: owner in x)]
+    history = history[history['Owner'].apply(lambda x: x.startswith(owner))]
     return history
 

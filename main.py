@@ -41,15 +41,11 @@ def main(**kwargs):
         print(f"Stocks sold this year after removing skipped ones {kwargs['skip']}")
         print(stocks_sold)
 
-    # stocks_sold.tolist().remove("HDFC")
-    # stocks_sold = ['AAPL','AMZN','BRK.B','DIS','GOOG','NFLX','OKTA','PYPL']
-    # stocks_sold = ['GOOG','NFLX','OKTA','PYPL']
-    # stocks_sold = ['NFLX','OKTA','PYPL']
-    # stocks_sold = ['AAPL','AMZN','BRK.B','DIS','NFLX','OKTA','PYPL']
-
     result = []
 
     for code in stocks_sold:
+        print("\n")
+        print(code)
         history = get_entire_history_for_stock(
             df, code, end, owner=kwargs['owner'])
         history['Price in INR'] = history['Price in INR'].apply(
@@ -62,7 +58,7 @@ def main(**kwargs):
 
         html = download_splits_data(code)
         data = extract_table(code, html)
-        # print(f"Splits for {code}")
+        print(f"Splits for {code}")
         splits = pd.DataFrame(data, columns=["Date", "Splits"])
         r = re.compile(r'(\d+) for (\d+)')
 
@@ -110,8 +106,7 @@ if __name__ == "__main__":
 
     kwargs['owner'] = args.owner[0]
 
-    if args.skip:
-        kwargs['skip'] = args.skip
+    kwargs['skip'] = args.skip
 
     if kwargs['debug']:
         print(colored("Current configuration:", 'yellow'))
