@@ -6,10 +6,10 @@ def get_sales_for_year(df, start, end, owner):
     txns_current_year = df[(df['TradeTime'] >= start) & (df['TradeTime'] <= end)]
     txns_current_year = txns_current_year[["Owner","Instrument","Symbol","TradeTime","B/S","Amount","Price","Currency","Price in INR"]]
     # print("filtering for financial year and cols", txns_current_year.shape, "\n")
-    removed = txns_current_year[txns_current_year['Owner'].apply(lambda x: owner not in x)]
+    removed = txns_current_year[txns_current_year['Owner'].apply(lambda x: not x.startswith(owner))]
     # print("Removed the following transaction")
     # print(removed[['Owner','Symbol','B/S']], "\n")
-    txns_current_year = txns_current_year[txns_current_year['Owner'].apply(lambda x: owner in x)]
+    txns_current_year = txns_current_year[txns_current_year['Owner'].apply(lambda x: x.startswith(owner))]
     # print("filtering for DC ownership", txns_current_year.shape, "\n")
     sales_this_year = txns_current_year[txns_current_year['B/S'] == "Sold"]
     # print("filtering for sales", sales_this_year.shape, "\n")
