@@ -1,3 +1,6 @@
+from termcolor import colored
+import argparse
+from datetime import datetime
 import os
 import re
 from sheets import fetch_data_from_spreadsheet
@@ -6,6 +9,9 @@ from dates import get_financial_year
 from process import get_sales_for_year, get_entire_history_for_stock
 from scraper import download_splits_data, extract_table
 from capitalgains import calc_gains, compute_profit
+from dotenv import load_dotenv
+load_dotenv()
+
 
 def download_ledger():
     SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
@@ -15,7 +21,7 @@ def download_ledger():
     return pd.DataFrame(data[1:], columns=data[0])
 
 
-def main():
+def main(**kwargs):
 
     if not os.path.exists('txn_history.csv'):
         df = download_ledger()
@@ -23,24 +29,31 @@ def main():
     else:
         df = pd.read_csv('txn_history.csv')
 
-    start, end = get_financial_year()
-    sales_this_year = get_sales_for_year(df, start, end)
+    start, end = get_financial_year(kwargs['today'], debug=kwargs['debug'])
+    sales_this_year = get_sales_for_year(df, start, end, owner=kwargs['owner'])
     stocks_sold = sales_this_year['Symbol'].unique()
     stocks_sold.sort()
 
-    print("Stocks sold this year")
-    print(stocks_sold)
+    if kwargs.get('skip', None):
+        print(stocks_sold)
+        stocks_sold = [x for x in stocks_sold if x not in ['GOOG', 'GOOGL','HDFC']]
+        print(stocks_sold)
+
+    if kwargs.get('debug', False):
+        print(f"Stocks sold this year after removing skipped ones {kwargs['skip']}")
+        print(stocks_sold)
 
     # stocks_sold.tolist().remove("HDFC")
-    stocks_sold = ['AAPL','AMZN','BRK.B','DIS','GOOG','NFLX','OKTA','PYPL']
-    stocks_sold = ['GOOG','NFLX','OKTA','PYPL']
-    stocks_sold = ['NFLX','OKTA','PYPL']
-    stocks_sold = ['AAPL','AMZN','BRK.B','DIS','NFLX','OKTA','PYPL']
+    # stocks_sold = ['AAPL','AMZN','BRK.B','DIS','GOOG','NFLX','OKTA','PYPL']
+    # stocks_sold = ['GOOG','NFLX','OKTA','PYPL']
+    # stocks_sold = ['NFLX','OKTA','PYPL']
+    # stocks_sold = ['AAPL','AMZN','BRK.B','DIS','NFLX','OKTA','PYPL']
 
     result = []
 
     for code in stocks_sold:
-        history = get_entire_history_for_stock(df, code, end)
+        history = get_entire_history_for_stock(
+            df, code, end, owner=kwargs['owner'])
         history['Price in INR'] = history['Price in INR'].apply(
             lambda x: x.replace(",", ""))
         history['Price in INR'] = history['Price in INR'].astype(float)
@@ -68,7 +81,7 @@ def main():
 
         print(f"Tax for {code}: {data['Tax@20'].sum()/1e5:.2f}L")
 
-        result.append({'Code':code, 'Tax':data['Tax@20'].sum()})
+        result.append({'Code': code, 'Tax': data['Tax@20'].sum()})
 
         # calc_gains(history, pd.DataFrame(), start, end)
 
@@ -78,4 +91,33 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--date", help="A date in the format YYYY-MM-DD", required=False)
+    parser.add_argument(
+        "--owner", help="Owner of the stock e.g. DC", required=True, nargs='+')
+    parser.add_argument(
+        "--skip", help="Skip the following stocks", required=False, nargs='+')
+    parser.add_argument("--debug", help="Debug mode", action="store_true")
+
+    kwargs = {}
+    args = parser.parse_args()
+
+    if args.date:
+        kwargs['today'] = pd.to_datetime(args.date)
+    else:
+        kwargs['today'] = datetime.today()
+
+    kwargs['debug'] = args.debug
+
+    kwargs['owner'] = args.owner[0]
+
+    if args.skip:
+        kwargs['skip'] = args.skip
+
+    if kwargs['debug']:
+        print(colored("Current configuration:", 'yellow'))
+        for k, v in kwargs.items():
+            print(colored(f"{k}: {v} ({type(v)})", 'yellow'))
+
+    main(**kwargs)
