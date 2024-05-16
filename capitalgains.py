@@ -39,6 +39,8 @@ def calc_gains(history: pd.DataFrame, splits: pd.DataFrame, start, end):
 
     print(data)
 
+    return data
+
 
 def sell_fifo(buys, sales):
     df = []
