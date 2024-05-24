@@ -1,5 +1,6 @@
 from datetime import datetime
 import pandas as pd
+from main import download_current_prices
 from sheets import fetch_data_from_spreadsheet
 from dates import get_financial_year
 from process import get_sales_for_year, get_entire_history_for_stock
@@ -46,3 +47,9 @@ class TestSheets(TestCase):
         code = "AAPL"
         history = get_entire_history_for_stock(df, code, end)
         print(history)
+
+    def test_current_prices(self):
+        df = download_current_prices()        
+        self.assertTrue(len(df) > 0)
+        self.assertTrue(df.columns.tolist() == ['Symbol', 'Share Price'])
+        print(df.dtypes)

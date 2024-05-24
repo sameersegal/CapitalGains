@@ -3,7 +3,7 @@ import argparse
 from datetime import datetime
 import os
 import re
-from sheets import fetch_data_from_spreadsheet
+from sheets import download_ledger, download_current_prices
 import pandas as pd
 from dates import get_financial_year
 from process import get_sales_for_year, get_entire_history_for_stock
@@ -12,35 +12,8 @@ from capitalgains import calc_gains, compute_profit
 from dotenv import load_dotenv
 load_dotenv()
 
-
-def download_ledger():
-    SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
-    RANGE_NAME = os.environ.get('SPREADSHEET_RANGE')
-
-    data = fetch_data_from_spreadsheet(SPREADSHEET_ID, RANGE_NAME)
-    return pd.DataFrame(data[1:], columns=data[0])
-
-
-def main(**kwargs):
-
-    if not os.path.exists('txn_history.csv'):
-        df = download_ledger()
-        df.to_csv('txn_history.csv', index=False)
-    else:
-        df = pd.read_csv('txn_history.csv')
-
-    start, end = get_financial_year(kwargs['today'], debug=kwargs['debug'])
-    sales_this_year = get_sales_for_year(df, start, end, owner=kwargs['owner'])
-    stocks_sold = sales_this_year['Symbol'].unique()
-    stocks_sold.sort()
-
-    if kwargs.get('skip', None):
-        stocks_sold = [x for x in stocks_sold if x not in kwargs['skip']]
-
-    if kwargs.get('debug', False):
-        print(f"Stocks sold this year after removing skipped ones {kwargs['skip']}")
-        print(stocks_sold)
-
+def calculate_capital_gains(df, stocks_sold, start, end, **kwargs):
+    
     result = []
 
     for code in stocks_sold:
@@ -79,27 +52,74 @@ def main(**kwargs):
 
         print(f"Tax for {code}: {data['Tax@20'].sum()/1e5:.2f}L")
 
-        result.append({'Code': code, 'Tax': data['Tax@20'].sum()})
+        result.append({'Code': code, 'Gain':data['Gain'].sum(), 'Tax': data['Tax@20'].sum()})
 
         # calc_gains(history, pd.DataFrame(), start, end)
 
     result = pd.DataFrame(result)
     print(result)
+    print(f"Total gains: {result['Gain'].sum()/1e5:.2f}L")
     print(f"Total tax: {result['Tax'].sum()/1e5:.2f}L")
 
+def main(**kwargs):
+    
+    # download file dependencies
+    
+    if not kwargs['skip_download']:
+        os.remove('txn_history.csv')
+        os.remove('current_prices.csv')
+
+    if not os.path.exists('txn_history.csv'):
+        df = download_ledger()
+        df.to_csv('txn_history.csv', index=False)
+
+    if kwargs.get('simulation',False) and not os.path.exists('current_prices.csv'):        
+        df = download_current_prices()
+        df.to_csv('current_prices.csv', index=False)
+
+    start, end = get_financial_year(kwargs['today'], debug=kwargs['debug'])
+    sales_this_year = get_sales_for_year(df, start, end, owner=kwargs['owner'])
+    stocks_sold = sales_this_year['Symbol'].unique()
+    stocks_sold.sort()
+
+    if kwargs.get('skip-stocks', None):
+        stocks_sold = [x for x in stocks_sold if x not in kwargs['skip']]
+
+    if kwargs.get('debug', False):
+        print(f"Stocks sold this year after removing skipped ones {kwargs['skip']}")
+        print(stocks_sold)
+
+    if kwargs.get('consider_stock', None):
+        stocks_sold = kwargs['consider_stock']
+
+    if kwargs.get('consider_amounts', None):
+        pass
+
+    df = pd.read_csv('txn_history.csv')
+    if not kwargs.get('simulation', False):
+        
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('--simulation', help='Run in simulation mode', 
+    action='store_true')
+    parser.add_argument('--skip-download', help='Skip download of files', action='store_true')
     parser.add_argument(
         "--date", help="A date in the format YYYY-MM-DD", required=False)
     parser.add_argument(
         "--owner", help="Owner of the stock e.g. DC", required=True, nargs='+')
     parser.add_argument(
-        "--skip", help="Skip the following stocks", required=False, nargs='+')
+        "--skip-stocks", help="Skip the following stocks", required=False, nargs='+')
+    parser.add_argument(
+        "--consider-stock", help="Consider only the following stock", required=False)
+    parser.add_argument("--consider-amounts", help="Consider only the following amounts to sell", required=False, nargs='+')
     parser.add_argument("--debug", help="Debug mode", action="store_true")
 
     kwargs = {}
     args = parser.parse_args()
+
+    kwargs['simulation'] = args.simulation
+    kwargs['skip_download'] = args.skip_download
 
     if args.date:
         kwargs['today'] = pd.to_datetime(args.date)
@@ -110,7 +130,9 @@ if __name__ == "__main__":
 
     kwargs['owner'] = args.owner[0]
 
-    kwargs['skip'] = args.skip
+    kwargs['skip_stocks'] = args.skip_stocks
+    kwargs['consider_stock'] = args.consider_stock
+    kwargs['consider_amounts'] = args.consider_amounts
 
     if kwargs['debug']:
         print(colored("Current configuration:", 'yellow'))

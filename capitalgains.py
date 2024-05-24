@@ -88,9 +88,14 @@ def compute_profit(df):
     df.loc[:, 'FY Purchase'] = df.apply(
         lambda x: get_fy(x['Purchase Date']), axis=1)
     
+    # print(df)
+    
     cii = pd.read_csv('cii.csv')
 
     df = df.merge(cii, left_on='FY Selling', right_on='Financial Year')
+
+    # print(df)
+
     df = df.rename(columns={'CII': 'CII Selling'})
     df = df.drop(columns=['Financial Year'])
 
@@ -104,9 +109,12 @@ def compute_profit(df):
     # df.loc[:, 'Profit'] = (df['Sale Price'] - df['Indexed Cost Price']) * df['Quantity']
 
     # Long term capital gains with indexation benefits
+    df.loc[:, 'Gain'] = (df['Sale Price'] - df['Indexed Cost Price']) * df['Quantity']
+
     df.loc[:, 'Tax@20WI'] = (df['Sale Price'] - df['Indexed Cost Price']) * df['Quantity'] * 0.2
 
     df.loc[:, 'Tax@20'] = (df['Sale Price'] - df['Cost Price']) * df['Quantity'] * 0.2
+
 
     print("Final Calculation")
     print(df.to_csv(index=False))
