@@ -66,8 +66,10 @@ def main(**kwargs):
     # download file dependencies
     
     if not kwargs['skip_download']:
-        os.remove('txn_history.csv')
-        os.remove('current_prices.csv')
+        if os.path.exists('txn_history.csv'):
+            os.remove('txn_history.csv')
+        if os.path.exists('current_prices.csv'):
+            os.remove('current_prices.csv')
 
     if not os.path.exists('txn_history.csv'):
         df = download_ledger()
@@ -77,26 +79,31 @@ def main(**kwargs):
         df = download_current_prices()
         df.to_csv('current_prices.csv', index=False)
 
-    start, end = get_financial_year(kwargs['today'], debug=kwargs['debug'])
-    sales_this_year = get_sales_for_year(df, start, end, owner=kwargs['owner'])
-    stocks_sold = sales_this_year['Symbol'].unique()
-    stocks_sold.sort()
-
-    if kwargs.get('skip-stocks', None):
-        stocks_sold = [x for x in stocks_sold if x not in kwargs['skip']]
-
-    if kwargs.get('debug', False):
-        print(f"Stocks sold this year after removing skipped ones {kwargs['skip']}")
-        print(stocks_sold)
+    start = None
+    end = None
 
     if kwargs.get('consider_stock', None):
         stocks_sold = kwargs['consider_stock']
+        start, end = get_financial_year()
+    else:
+        start, end = get_financial_year(kwargs['today'], debug=kwargs['debug'])
+        sales_this_year = get_sales_for_year(df, start, end, owner=kwargs['owner'])
+        stocks_sold = sales_this_year['Symbol'].unique()
+        stocks_sold.sort()
 
+        if kwargs.get('skip_stocks', None):
+            stocks_sold = [x for x in stocks_sold if x not in kwargs['skip_stocks']]
+
+        if kwargs.get('debug', False):
+            print(f"Stocks sold this year after removing skipped ones {kwargs['skip_stocks']}")
+            print(stocks_sold)
+
+    
     if kwargs.get('consider_amounts', None):
         pass
 
     df = pd.read_csv('txn_history.csv')
-    if not kwargs.get('simulation', False):
+    calculate_capital_gains(df, stocks_sold, start, end, **kwargs)
         
 
 if __name__ == "__main__":
