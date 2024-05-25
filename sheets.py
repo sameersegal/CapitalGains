@@ -33,15 +33,20 @@ def download_ledger():
     df = pd.DataFrame(data[1:], columns=data[0])
 
     # clean up
-    df = df[["Owner","Instrument","Symbol","TradeTime","B/S","Amount","Price","Currency","Price in INR"]]
+    df = df[["Owner","Symbol","TradeTime","B/S","Amount","Price","Currency","Price in INR"]]
     df['TradeTime'] = pd.to_datetime(df['TradeTime'], format='mixed', dayfirst=False)
     df['Price in INR'] = df['Price in INR'].apply(
         lambda x: x.replace(",", "") if isinstance(x, str) else x)
     df['Price in INR'] = df['Price in INR'].astype(float)
     df['Amount'] = df['Amount'].apply(
         lambda x: x.replace(",", "") if isinstance(x, str) else x)
-    df['Amount'] = df['Amount'].astype(float)
+    df['Amount'] = df['Amount'].astype(float)    
 
+    return df
+
+def load_ledger():
+    df = pd.read_csv('txn_history.csv')
+    df['TradeTime'] = pd.to_datetime(df['TradeTime'], format='mixed', dayfirst=False)    
     return df
 
 def download_current_prices():

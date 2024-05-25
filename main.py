@@ -3,7 +3,7 @@ import argparse
 from datetime import datetime
 import os
 import re
-from sheets import download_ledger, download_current_prices
+from sheets import download_ledger, download_current_prices, load_ledger
 import pandas as pd
 from dates import get_financial_year
 from process import get_sales_for_year, get_entire_history_for_stock
@@ -75,7 +75,7 @@ def main(**kwargs):
         start, end = get_financial_year()
         debug(f"Start: {start}, End: {end}")
     else:
-        df = pd.read_csv('txn_history.csv')
+        df = load_ledger()
         start, end = get_financial_year(kwargs['today'], debug=kwargs['debug'])
         debug(f"Start: {start}, End: {end}")
         sales_this_year = get_sales_for_year(df, start, end, owner=kwargs['owner'])
@@ -93,17 +93,29 @@ def main(**kwargs):
 
     if kwargs.get('simulation', False):
         
+        df = load_ledger()
         prices = pd.read_csv('current_prices.csv')
 
-        for code in stocks_sold:
+        for code in stocks_sold:            
+            current_price = prices[prices['Symbol'] == code]['Share Price'].values[0]
+            usd_inr = 83.5
             row = {
-
+                'Owner': kwargs['owner'],
+                'Symbol': code,
+                'TradeTime': datetime.today().date(),
+                'B/S': 'Sold',
+                'Amount': -1,
+                'Price': current_price,
+                'Currency': 'USD',                
+                'Price in INR': current_price * usd_inr
             }
-            new_df = pd.concat([df, pd.DataFrame(row)])
+            print(df.dtypes)
+            new_df = pd.concat([df, pd.DataFrame([row])])
+            new_df['TradeTime'] = pd.to_datetime(df['TradeTime'], format='mixed', dayfirst=False)
             
-            # calculate_capital_gains(new_df, [code], start, end, **kwargs)
+            calculate_capital_gains(new_df, [code], start, end, **kwargs)
     else:
-        df = pd.read_csv('txn_history.csv')
+        df = load_ledger()
         calculate_capital_gains(df, stocks_sold, start, end, **kwargs)
         
 
@@ -119,7 +131,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--skip-stocks", help="Skip the following stocks", required=False, nargs='+')
     parser.add_argument(
-        "--consider-stocks", help="Consider only the following stock", required=False)
+        "--consider-stocks", help="Consider only the following stock", required=False, nargs='+')
     parser.add_argument("--consider-amounts", help="Consider only the following amounts to sell", required=False, nargs='+')
     parser.add_argument("--debug", help="Debug mode", action="store_true")
 
