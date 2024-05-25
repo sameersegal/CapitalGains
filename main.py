@@ -49,20 +49,28 @@ def calculate_capital_gains(df, stocks_sold, start, end, **kwargs):
 def main(**kwargs):
     
     # download file dependencies
+    def debug(*args):
+        if kwargs['debug']:
+            args = ' '.join([str(a) for a in args])
+            print(colored(args,'yellow'))
     
     if not kwargs['skip_download']:
         if os.path.exists('txn_history.csv'):
             os.remove('txn_history.csv')
         if os.path.exists('current_prices.csv'):
             os.remove('current_prices.csv')
+    else:
+        debug("Not deleting old files because --skip-download is set")
 
     if not os.path.exists('txn_history.csv'):
         df = download_ledger()
         df.to_csv('txn_history.csv', index=False)
+        debug("Downloaded Investment Ledger from Google Sheets")
 
     if kwargs.get('simulation',False) and not os.path.exists('current_prices.csv'):        
         df = download_current_prices()
         df.to_csv('current_prices.csv', index=False)
+        debug("Downloaded Current Share Prices from Google Sheets")
 
     start = None
     end = None
@@ -70,20 +78,21 @@ def main(**kwargs):
     if kwargs.get('consider_stock', None):
         stocks_sold = kwargs['consider_stock']
         start, end = get_financial_year()
+        debug(f"Start: {start}, End: {end}")
     else:
+        df = pd.read_csv('txn_history.csv')
         start, end = get_financial_year(kwargs['today'], debug=kwargs['debug'])
+        debug(f"Start: {start}, End: {end}")
         sales_this_year = get_sales_for_year(df, start, end, owner=kwargs['owner'])
         stocks_sold = sales_this_year['Symbol'].unique()
         stocks_sold.sort()
 
         if kwargs.get('skip_stocks', None):
             stocks_sold = [x for x in stocks_sold if x not in kwargs['skip_stocks']]
+            debug(f"Skipped the following stocks {kwargs['skip_stocks']}")
 
-        if kwargs.get('debug', False):
-            print(f"Stocks sold this year after removing skipped ones {kwargs['skip_stocks']}")
-            print(stocks_sold)
+    debug(f"Considering only {stocks_sold}")
 
-    
     if kwargs.get('consider_amounts', None):
         pass
 
