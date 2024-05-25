@@ -7,7 +7,7 @@ from sheets import download_ledger, download_current_prices
 import pandas as pd
 from dates import get_financial_year
 from process import get_sales_for_year, get_entire_history_for_stock
-from scraper import download_splits_data, extract_table
+from scraper import get_splits
 from capitalgains import calc_gains, compute_profit
 from dotenv import load_dotenv
 load_dotenv()
@@ -22,29 +22,14 @@ def calculate_capital_gains(df, stocks_sold, start, end, **kwargs):
         history = get_entire_history_for_stock(
             df, code, end, owner=kwargs['owner'])
         history['Price in INR'] = history['Price in INR'].apply(
-            lambda x: x.replace(",", ""))
+            lambda x: x.replace(",", "") if isinstance(x, str) else x)
         history['Price in INR'] = history['Price in INR'].astype(float)
         history['Amount'] = history['Amount'].astype(float)
 
         # print(f"History for {code}")
         # print(history)
 
-        html = download_splits_data(code)
-        data = extract_table(code, html)
-        print(f"Splits for {code}")
-        splits = pd.DataFrame(data, columns=["Date", "Splits"])
-        r = re.compile(r'(\d+) for (\d+)')
-
-        def extract_ratio(x):
-            m = r.match(x)
-            return int(m.group(1)) / int(m.group(2)) if m else 1
-
-        splits.loc[:, 'Ratio'] = splits['Splits'].apply(
-            lambda x: extract_ratio(x))
-        # print(splits)
-
-        # convert date from MM/DD/YYYY to YYYY-MM-DD
-        splits['Date'] = pd.to_datetime(splits['Date'], format='%m/%d/%Y')
+        splits = get_splits(code)
         print(splits.to_csv(index=False))
 
         data = calc_gains(history, splits, start, end)
