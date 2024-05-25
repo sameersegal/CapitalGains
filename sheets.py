@@ -53,7 +53,7 @@ def download_current_prices():
     SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
     RANGES = os.environ.get('CURRENT_PRICE_RANGE')
 
-    df = pd.DataFrame(columns=['Symbol','Share Price'])
+    df = pd.DataFrame(columns=['Symbol','Quantity', 'Share Price'])
     for RANGE_NAME in RANGES.split(','):
         data = fetch_data_from_spreadsheet(SPREADSHEET_ID, RANGE_NAME)            
         data = pd.DataFrame(data[1:], columns=data[0])             

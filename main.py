@@ -1,3 +1,4 @@
+import numpy as np
 from termcolor import colored
 import argparse
 from datetime import datetime
@@ -7,7 +8,7 @@ from sheets import download_ledger, download_current_prices, load_ledger
 import pandas as pd
 from dates import get_financial_year
 from process import get_sales_for_year, get_entire_history_for_stock
-from scraper import get_splits
+from scraper import download_usd_to_inr, get_splits
 from capitalgains import calc_gains, compute_profit
 from dotenv import load_dotenv
 load_dotenv()
@@ -83,21 +84,22 @@ def main(**kwargs):
 
     debug(f"Considering only {stocks_sold}")
 
-    if kwargs.get('consider_amounts', None):
-        pass
-
     if kwargs.get('simulation', False):
         
         df = load_ledger()
         prices = pd.read_csv('current_prices.csv')
 
         final_result = pd.DataFrame(columns=['Code', 'Cash', 'Gain', 'Tax'])
+        usd_inr = download_usd_to_inr()
         for code in stocks_sold:            
             current_price = prices[prices['Symbol'] == code]['Share Price'].values[0]
-            usd_inr = 83.5
+            total_quantity = prices[prices['Symbol'] == code]['Share Price'].values[0]
 
-            for amount in kwargs['consider_amounts']:
-                quantity = float(amount) // float(current_price)
+            if not kwargs.get('consider_percentages', None):
+                raise Exception("Please provide the percentage to sell for simulation")
+
+            for percentage in kwargs['consider_percentages']:
+                quantity = np.ceil(total_quantity * float(percentage) / 100)
                 row = {
                     'Owner': kwargs['owner'],
                     'Symbol': code,
@@ -113,6 +115,7 @@ def main(**kwargs):
                 
                 result = calculate_capital_gains(new_df, [code], start, end, **kwargs)
                 result['Quantity'] = quantity
+                result['Percentage'] = percentage
                 final_result = pd.concat([final_result, result]) if len(final_result) > 0 else result
 
         print("\n\nSimulation Results")
@@ -139,7 +142,7 @@ if __name__ == "__main__":
         "--skip-stocks", help="Skip the following stocks", required=False, nargs='+')
     parser.add_argument(
         "--consider-stocks", help="Consider only the following stock", required=False, nargs='+')
-    parser.add_argument("--consider-amounts", help="Consider only the following amounts to sell", required=False, nargs='+')
+    parser.add_argument("--consider-percentages", help="Consider only the following percentages to sell", required=False, nargs='+')
     parser.add_argument("--debug", help="Debug mode", action="store_true")
 
     kwargs = {}
@@ -159,7 +162,7 @@ if __name__ == "__main__":
 
     kwargs['skip_stocks'] = args.skip_stocks
     kwargs['consider_stocks'] = args.consider_stocks
-    kwargs['consider_amounts'] = args.consider_amounts
+    kwargs['consider_percentages'] = args.consider_percentages
 
     if kwargs['debug']:
         print(colored("Current configuration:", 'yellow'))
