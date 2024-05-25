@@ -12,6 +12,8 @@ from capitalgains import calc_gains, compute_profit
 from dotenv import load_dotenv
 load_dotenv()
 
+debug: callable = None
+
 def calculate_capital_gains(df, stocks_sold, start, end, **kwargs):
     
     result = []
@@ -21,10 +23,6 @@ def calculate_capital_gains(df, stocks_sold, start, end, **kwargs):
         print(code)
         history = get_entire_history_for_stock(
             df, code, end, owner=kwargs['owner'])
-        history['Price in INR'] = history['Price in INR'].apply(
-            lambda x: x.replace(",", "") if isinstance(x, str) else x)
-        history['Price in INR'] = history['Price in INR'].astype(float)
-        history['Amount'] = history['Amount'].astype(float)
 
         # print(f"History for {code}")
         # print(history)
@@ -75,8 +73,8 @@ def main(**kwargs):
     start = None
     end = None
 
-    if kwargs.get('consider_stock', None):
-        stocks_sold = kwargs['consider_stock']
+    if kwargs.get('consider_stocks', None):
+        stocks_sold = kwargs['consider_stocks']
         start, end = get_financial_year()
         debug(f"Start: {start}, End: {end}")
     else:
@@ -96,8 +94,19 @@ def main(**kwargs):
     if kwargs.get('consider_amounts', None):
         pass
 
-    df = pd.read_csv('txn_history.csv')
-    calculate_capital_gains(df, stocks_sold, start, end, **kwargs)
+    if kwargs.get('simulation', False):
+        
+        prices = pd.read_csv('current_prices.csv')
+
+        for code in stocks_sold:
+            row = {
+
+            }
+            new_df = pd.concat([df, pd.DataFrame(row)])
+            calculate_capital_gains(new_df, [code], start, end, **kwargs)
+    else:
+        df = pd.read_csv('txn_history.csv')
+        calculate_capital_gains(df, stocks_sold, start, end, **kwargs)
         
 
 if __name__ == "__main__":
@@ -112,7 +121,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--skip-stocks", help="Skip the following stocks", required=False, nargs='+')
     parser.add_argument(
-        "--consider-stock", help="Consider only the following stock", required=False)
+        "--consider-stocks", help="Consider only the following stock", required=False)
     parser.add_argument("--consider-amounts", help="Consider only the following amounts to sell", required=False, nargs='+')
     parser.add_argument("--debug", help="Debug mode", action="store_true")
 
@@ -132,7 +141,7 @@ if __name__ == "__main__":
     kwargs['owner'] = args.owner[0]
 
     kwargs['skip_stocks'] = args.skip_stocks
-    kwargs['consider_stock'] = args.consider_stock
+    kwargs['consider_stocks'] = args.consider_stocks
     kwargs['consider_amounts'] = args.consider_amounts
 
     if kwargs['debug']:

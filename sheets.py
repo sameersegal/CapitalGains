@@ -30,7 +30,17 @@ def download_ledger():
     RANGE_NAME = os.environ.get('SPREADSHEET_RANGE')
 
     data = fetch_data_from_spreadsheet(SPREADSHEET_ID, RANGE_NAME)
-    return pd.DataFrame(data[1:], columns=data[0])
+    df = pd.DataFrame(data[1:], columns=data[0])
+
+    # clean up
+    df['TradeTime'] = pd.to_datetime(df['TradeTime'], format='mixed', dayfirst=False)
+    df = df[["Owner","Instrument","Symbol","TradeTime","B/S","Amount","Price","Currency","Price in INR"]]
+    df['Price in INR'] = df['Price in INR'].apply(
+        lambda x: x.replace(",", "") if isinstance(x, str) else x)
+    df['Price in INR'] = df['Price in INR'].astype(float)
+    df['Amount'] = df['Amount'].astype(float)
+
+    return df
 
 def download_current_prices():
     SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
