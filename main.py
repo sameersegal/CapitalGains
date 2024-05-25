@@ -24,9 +24,6 @@ def calculate_capital_gains(df, stocks_sold, start, end, **kwargs):
         history = get_entire_history_for_stock(
             df, code, end, owner=kwargs['owner'])
 
-        # print(f"History for {code}")
-        # print(history)
-
         splits = get_splits(code)
         print(splits.to_csv(index=False))
 
@@ -103,7 +100,8 @@ def main(**kwargs):
 
             }
             new_df = pd.concat([df, pd.DataFrame(row)])
-            calculate_capital_gains(new_df, [code], start, end, **kwargs)
+            
+            # calculate_capital_gains(new_df, [code], start, end, **kwargs)
     else:
         df = pd.read_csv('txn_history.csv')
         calculate_capital_gains(df, stocks_sold, start, end, **kwargs)
