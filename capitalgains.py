@@ -112,6 +112,8 @@ def compute_profit(df):
     # df.loc[:, 'Profit'] = (df['Sale Price'] - df['Indexed Cost Price']) * df['Quantity']
 
     # Long term capital gains with indexation benefits
+    df.loc[:, 'Cash'] = df['Sale Price'] * df['Quantity']
+
     df.loc[:, 'Gain'] = (df['Sale Price'] - df['Indexed Cost Price']) * df['Quantity']
 
     df.loc[:, 'Tax@20WI'] = (df['Sale Price'] - df['Indexed Cost Price']) * df['Quantity'] * 0.2

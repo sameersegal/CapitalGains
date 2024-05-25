@@ -14,7 +14,7 @@ load_dotenv()
 
 debug: callable = None
 
-def calculate_capital_gains(df, stocks_sold, start, end, **kwargs):
+def calculate_capital_gains(df, stocks_sold, start, end, **kwargs) -> pd.DataFrame:
     
     result = []
 
@@ -32,14 +32,9 @@ def calculate_capital_gains(df, stocks_sold, start, end, **kwargs):
 
         print(f"Tax for {code}: {data['Tax@20'].sum()/1e5:.2f}L")
 
-        result.append({'Code': code, 'Gain':data['Gain'].sum(), 'Tax': data['Tax@20'].sum()})
+        result.append({'Code': code, 'Cash':data['Cash'].sum(), 'Gain':data['Gain'].sum(), 'Tax': data['Tax@20'].sum()})        
 
-        # calc_gains(history, pd.DataFrame(), start, end)
-
-    result = pd.DataFrame(result)
-    print(result)
-    print(f"Total gains: {result['Gain'].sum()/1e5:.2f}L")
-    print(f"Total tax: {result['Tax'].sum()/1e5:.2f}L")
+    return pd.DataFrame(result)
 
 def main(**kwargs):
     
@@ -115,10 +110,16 @@ def main(**kwargs):
                 
                 new_df = pd.concat([df, pd.DataFrame([row])])                
                 
-                calculate_capital_gains(new_df, [code], start, end, **kwargs)
+                result = calculate_capital_gains(new_df, [code], start, end, **kwargs)
+
+                print(result.to_markdown(index=False))
     else:
         df = load_ledger()
-        calculate_capital_gains(df, stocks_sold, start, end, **kwargs)
+        result = calculate_capital_gains(df, stocks_sold, start, end, **kwargs)
+
+        print(result.to_markdown(index=False))
+        print(f"Total gains: {result['Gain'].sum()/1e5:.2f}L")
+        print(f"Total tax: {result['Tax'].sum()/1e5:.2f}L")
         
 
 if __name__ == "__main__":
