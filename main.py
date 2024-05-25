@@ -102,7 +102,7 @@ def main(**kwargs):
             row = {
                 'Owner': kwargs['owner'],
                 'Symbol': code,
-                'TradeTime': datetime.today().date(),
+                'TradeTime': datetime.today(),
                 'B/S': 'Sold',
                 'Amount': -1,
                 'Price': current_price,
@@ -111,7 +111,7 @@ def main(**kwargs):
             }
             print(df.dtypes)
             new_df = pd.concat([df, pd.DataFrame([row])])
-            new_df['TradeTime'] = pd.to_datetime(df['TradeTime'], format='mixed', dayfirst=False)
+            # new_df['TradeTime'] = pd.to_datetime(df['TradeTime'], format='mixed', dayfirst=False)
             
             calculate_capital_gains(new_df, [code], start, end, **kwargs)
     else:

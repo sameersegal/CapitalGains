@@ -1,6 +1,9 @@
 import pandas as pd
 from dates import get_financial_year
 
+def print_df(df: pd.DataFrame):
+    print(df.to_markdown(index=False))
+
 
 def calc_gains(history: pd.DataFrame, splits: pd.DataFrame, start, end):
     history = history[["TradeTime", "B/S", "Amount", "Price", "Price in INR", "Owner"]]
@@ -17,8 +20,8 @@ def calc_gains(history: pd.DataFrame, splits: pd.DataFrame, start, end):
         float) * history['Ratio']
     history.loc[:, 'SplitAdjustedPrice'] = history['Price in INR'] / \
         history['Ratio']
-    print("History")
-    print(history.to_csv(index=False))
+    print("\nHistory")
+    print_df(history)
 
     buy_txn = history.loc[history['B/S'] == 'Bought', :]
 
@@ -28,8 +31,8 @@ def calc_gains(history: pd.DataFrame, splits: pd.DataFrame, start, end):
 
     sell_fifo(buy_txn, prev_sales)
 
-    print("Adjusting for previous sales")
-    print(buy_txn.to_csv(index=False))
+    print("\nAdjusting for previous sales")
+    print_df(buy_txn)
 
     new_sales = history.loc[(history['B/S'] == 'Sold')
                             & (history['TradeTime'] >= start), :]
@@ -39,8 +42,8 @@ def calc_gains(history: pd.DataFrame, splits: pd.DataFrame, start, end):
 
     # print(buy_txn)
 
-    print("Calculating purchase price & quantity for sales in current FY")
-    print(data.to_csv(index=False))
+    print("\nCalculating purchase price & quantity for sales in current FY")
+    print_df(data)
 
     return data
 
@@ -116,7 +119,7 @@ def compute_profit(df):
     df.loc[:, 'Tax@20'] = (df['Sale Price'] - df['Cost Price']) * df['Quantity'] * 0.2
 
 
-    print("Final Calculation")
-    print(df.to_csv(index=False))
+    print("\nFinal Calculation")
+    print_df(df)
 
     return df

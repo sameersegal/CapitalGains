@@ -32,7 +32,7 @@ def download_ledger():
     data = fetch_data_from_spreadsheet(SPREADSHEET_ID, RANGE_NAME)    
     df = pd.DataFrame(data[1:], columns=data[0])
 
-    # clean up
+    # clean up    
     df = df[["Owner","Symbol","TradeTime","B/S","Amount","Price","Currency","Price in INR"]]
     df['TradeTime'] = pd.to_datetime(df['TradeTime'], format='mixed', dayfirst=False)
     df['Price in INR'] = df['Price in INR'].apply(
