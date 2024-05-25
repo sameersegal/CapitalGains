@@ -99,21 +99,23 @@ def main(**kwargs):
         for code in stocks_sold:            
             current_price = prices[prices['Symbol'] == code]['Share Price'].values[0]
             usd_inr = 83.5
-            row = {
-                'Owner': kwargs['owner'],
-                'Symbol': code,
-                'TradeTime': datetime.today(),
-                'B/S': 'Sold',
-                'Amount': -1,
-                'Price': current_price,
-                'Currency': 'USD',                
-                'Price in INR': current_price * usd_inr
-            }
-            print(df.dtypes)
-            new_df = pd.concat([df, pd.DataFrame([row])])
-            # new_df['TradeTime'] = pd.to_datetime(df['TradeTime'], format='mixed', dayfirst=False)
-            
-            calculate_capital_gains(new_df, [code], start, end, **kwargs)
+
+            for amount in kwargs['consider_amounts']:
+                quantity = amount // current_price                
+                row = {
+                    'Owner': kwargs['owner'],
+                    'Symbol': code,
+                    'TradeTime': datetime.today(),
+                    'B/S': 'Sold',
+                    'Amount': quantity * -1,
+                    'Price': current_price,
+                    'Currency': 'USD',                
+                    'Price in INR': current_price * usd_inr
+                }
+                
+                new_df = pd.concat([df, pd.DataFrame([row])])                
+                
+                calculate_capital_gains(new_df, [code], start, end, **kwargs)
     else:
         df = load_ledger()
         calculate_capital_gains(df, stocks_sold, start, end, **kwargs)
