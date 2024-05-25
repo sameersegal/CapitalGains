@@ -91,6 +91,7 @@ def main(**kwargs):
         df = load_ledger()
         prices = pd.read_csv('current_prices.csv')
 
+        final_result = pd.DataFrame(columns=['Code', 'Cash', 'Gain', 'Tax'])
         for code in stocks_sold:            
             current_price = prices[prices['Symbol'] == code]['Share Price'].values[0]
             usd_inr = 83.5
@@ -111,8 +112,11 @@ def main(**kwargs):
                 new_df = pd.concat([df, pd.DataFrame([row])])                
                 
                 result = calculate_capital_gains(new_df, [code], start, end, **kwargs)
+                result['Quantity'] = quantity
+                final_result = pd.concat([final_result, result]) if len(final_result) > 0 else result
 
-                print(result.to_markdown(index=False))
+        print("\n\nSimulation Results")
+        print(final_result.to_markdown(index=False))
     else:
         df = load_ledger()
         result = calculate_capital_gains(df, stocks_sold, start, end, **kwargs)
