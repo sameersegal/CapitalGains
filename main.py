@@ -101,7 +101,7 @@ def main(**kwargs):
             usd_inr = 83.5
 
             for amount in kwargs['consider_amounts']:
-                quantity = amount // current_price                
+                quantity = float(amount) // float(current_price)
                 row = {
                     'Owner': kwargs['owner'],
                     'Symbol': code,
