@@ -33,7 +33,7 @@ def download_ledger():
     df = pd.DataFrame(data[1:], columns=data[0])
 
     # clean up    
-    df = df[["Owner","Symbol","TradeTime","B/S","Amount","Price","Currency","Price in INR"]]
+    df = df[["Platform","Owner","Symbol","TradeTime","B/S","Amount","Price","Currency","Price in INR"]]
     df['TradeTime'] = pd.to_datetime(df['TradeTime'], format='mixed', dayfirst=False)
     df['Price in INR'] = df['Price in INR'].apply(
         lambda x: x.replace(",", "") if isinstance(x, str) else x)
@@ -53,11 +53,12 @@ def download_current_prices():
     SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
     RANGES = os.environ.get('CURRENT_PRICE_RANGE')
 
-    df = pd.DataFrame(columns=['Symbol','Quantity', 'Share Price'])
-    for RANGE_NAME in RANGES.split(','):
+    df = pd.DataFrame(columns=['Symbol','Quantity', 'Share Price', 'Currency'])
+    for i, RANGE_NAME in enumerate(RANGES.split(',')):
         data = fetch_data_from_spreadsheet(SPREADSHEET_ID, RANGE_NAME)            
         data = pd.DataFrame(data[1:], columns=data[0])             
-        df = pd.concat([df, data[['Symbol','Share Price']]])
+        data['Currency'] = 'USD' if i == 0 else 'INR'
+        df = pd.concat([df, data[['Symbol','Quantity', 'Share Price', 'Currency']]])
 
     df['Share Price'] = df['Share Price'].apply(lambda x: float(x.replace(",", "")))
 

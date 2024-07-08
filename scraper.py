@@ -5,10 +5,16 @@ from bs4 import BeautifulSoup
 
 
 def get_splits(code: str):
-    html = download_splits_data(code)
-    data = extract_table(code, html)
-    print(f"Splits for {code}")
-    splits = pd.DataFrame(data, columns=["Date", "Splits"])
+
+    if code == "GRINDWELL":
+        splits = pd.DataFrame(columns=["Date", "Splits"], data=[["07/14/2016", "2 for 1"]])
+    else:
+
+        html = download_splits_data(code)
+        data = extract_table(code, html)
+        print(f"Splits for {code}")
+        splits = pd.DataFrame(data, columns=["Date", "Splits"])
+
     r = re.compile(r'(\d+) for (\d+)')
 
     def extract_ratio(x):

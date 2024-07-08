@@ -24,20 +24,26 @@ def calculate_capital_gains(df, stocks_sold, start, end, **kwargs) -> pd.DataFra
         print(code)
         history = get_entire_history_for_stock(
             df, code, end, owner=kwargs['owner'])
+        
+        split_code = code
+        if split_code == 'BOM:500209':
+            split_code = 'INFY'
 
-        splits = get_splits(code)
+        splits = get_splits(split_code)
         print(splits.to_csv(index=False))
 
         data = calc_gains(history, splits, start, end)
         data = compute_profit(data)
 
-        print(f"Tax for {code}: {data['Tax@20'].sum()/1e5:.2f}L")
+        print(f"Tax for {code}: {data['Tax@20WI'].sum()/1e5:.2f}L")
 
-        result.append({'Code': code, 'Cash':data['Cash'].sum(), 'Gain':data['Gain'].sum(), 'Tax': data['Tax@20'].sum()})        
+        result.append({'Code': code, 'Cash':data['Cash'].sum(), 'Gain':data['Gain'].sum(), 'Tax': data['Tax@20WI'].sum()})        
 
     return pd.DataFrame(result)
 
 def main(**kwargs):
+
+    pd.set_option('display.float_format', lambda x: '%.2f' % x)
     
     # download file dependencies
     def debug(*args):
@@ -93,7 +99,10 @@ def main(**kwargs):
         usd_inr = download_usd_to_inr()
         for code in stocks_sold:            
             current_price = prices[prices['Symbol'] == code]['Share Price'].values[0]
-            total_quantity = prices[prices['Symbol'] == code]['Share Price'].values[0]
+            total_quantity = prices[prices['Symbol'] == code]['Quantity'].values[0]
+            if code == "BOM:500209":
+                total_quantity = 2154
+            currency = prices[prices['Symbol'] == code]['Currency'].values[0]
 
             if not kwargs.get('consider_percentages', None):
                 raise Exception("Please provide the percentage to sell for simulation")
@@ -107,8 +116,8 @@ def main(**kwargs):
                     'B/S': 'Sold',
                     'Amount': quantity * -1,
                     'Price': current_price,
-                    'Currency': 'USD',                
-                    'Price in INR': current_price * usd_inr
+                    'Currency': currency,                
+                    'Price in INR': current_price * usd_inr if currency == 'USD' else current_price
                 }
                 
                 new_df = pd.concat([df, pd.DataFrame([row])])                
@@ -119,12 +128,13 @@ def main(**kwargs):
                 final_result = pd.concat([final_result, result]) if len(final_result) > 0 else result
 
         print("\n\nSimulation Results")
-        print(final_result.to_markdown(index=False))
+        print(final_result.to_markdown(index=False, floatfmt=".2f"))
     else:
         df = load_ledger()
         result = calculate_capital_gains(df, stocks_sold, start, end, **kwargs)
 
         print(result.to_markdown(index=False))
+        print(f"Total cash: {result['Cash'].sum()/1e5:.2f}L")
         print(f"Total gains: {result['Gain'].sum()/1e5:.2f}L")
         print(f"Total tax: {result['Tax'].sum()/1e5:.2f}L")
         

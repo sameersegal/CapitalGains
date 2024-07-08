@@ -118,7 +118,7 @@ def compute_profit(df):
 
     df.loc[:, 'Tax@20WI'] = (df['Sale Price'] - df['Indexed Cost Price']) * df['Quantity'] * 0.2
 
-    df.loc[:, 'Tax@20'] = (df['Sale Price'] - df['Cost Price']) * df['Quantity'] * 0.2
+    # df.loc[:, 'Tax@20'] = (df['Sale Price'] - df['Cost Price']) * df['Quantity'] * 0.2
 
 
     print("\nFinal Calculation")
