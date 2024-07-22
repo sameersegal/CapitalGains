@@ -2,7 +2,7 @@ from datetime import datetime
 
 from termcolor import colored
 
-def get_financial_year(today=datetime.today(), debug=False):
+def get_financial_year(today=datetime.today(), debug=False):    
     if today.month < 4:
         # Before April, the financial year starts last year
         start_year = today.year - 1

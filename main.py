@@ -74,11 +74,11 @@ def main(**kwargs):
 
     if kwargs.get('consider_stocks', None):
         stocks_sold = kwargs['consider_stocks']
-        start, end = get_financial_year()
+        start, end = get_financial_year(today=kwargs['today'], debug=kwargs['debug'])
         debug(f"Start: {start}, End: {end}")
     else:
         df = load_ledger()
-        start, end = get_financial_year(kwargs['today'], debug=kwargs['debug'])
+        start, end = get_financial_year(today=kwargs['today'], debug=kwargs['debug'])
         debug(f"Start: {start}, End: {end}")
         sales_this_year = get_sales_for_year(df, start, end, owner=kwargs['owner'])
         stocks_sold = sales_this_year['Symbol'].unique()
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     kwargs['skip_download'] = args.skip_download
 
     if args.date:
-        kwargs['today'] = pd.to_datetime(args.date)
+        kwargs['today'] = pd.to_datetime(args.date).date()
     else:
         kwargs['today'] = datetime.today()
 

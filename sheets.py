@@ -38,9 +38,17 @@ def download_ledger():
     df['Price in INR'] = df['Price in INR'].apply(
         lambda x: x.replace(",", "") if isinstance(x, str) else x)
     df['Price in INR'] = df['Price in INR'].astype(float)
+
+    df['Price'] = df['Price'].apply(
+        lambda x: x.replace(",", "") if isinstance(x, str) else x)
+    df['Price'] = df['Price'].apply(
+        lambda x: 0 if x == '' else x)    
+    df['Price'] = df['Price'].astype(float)
+
     df['Amount'] = df['Amount'].apply(
         lambda x: x.replace(",", "") if isinstance(x, str) else x)
     df['Amount'] = df['Amount'].astype(float)    
+
 
     return df
 

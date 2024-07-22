@@ -1,3 +1,4 @@
+from datetime import datetime
 import re
 import pandas as pd
 import requests
@@ -27,6 +28,11 @@ def get_splits(code: str):
 
     # convert date from MM/DD/YYYY to YYYY-MM-DD
     splits['Date'] = pd.to_datetime(splits['Date'], format='%m/%d/%Y')
+
+    # GOOG and GOOGL don't account for April 03, 2014 split as we have modified the transaction history to account for it. Also April 27, 2015 split should be skipped for GOOG.
+
+    if code in ['GOOG', 'GOOGL']:
+        splits = splits[splits['Date'] > datetime(2015, 4, 28)]
 
     return splits
 
