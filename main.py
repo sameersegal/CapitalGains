@@ -134,10 +134,12 @@ def main(**kwargs):
         result = calculate_capital_gains(df, stocks_sold, start, end, **kwargs)
 
         print(result.to_markdown(index=False))
-        print(f"Total cash: {result['Cash'].sum()/1e5:.2f}L")
-        print(f"Total gains: {result['Gain'].sum()/1e5:.2f}L")
-        print(f"Total tax: {result['Tax'].sum()/1e5:.2f}L")
-        
+        if len(result) > 1:
+            print(f"Total cash: {result['Cash'].sum()/1e5:.2f}L")
+            print(f"Total gains: {result['Gain'].sum()/1e5:.2f}L")
+            print(f"Total tax: {result['Tax'].sum()/1e5:.2f}L")
+        else:
+            print("No data to show")    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
